@@ -3,9 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/timer_settings"
-        android:title="Settings"
-        app:showAsAction="ifRoom"
         android:icon="@drawable/ic_settings"
-        />
+        android:title="Settings"
+        app:showAsAction="ifRoom" />
 
 </menu>

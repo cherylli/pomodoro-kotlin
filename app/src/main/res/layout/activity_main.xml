@@ -16,7 +16,10 @@
         app:layout_constraintBottom_toTopOf="@+id/progressBar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.0"
+        app:logo="@drawable/ic_timer"
+        app:title="Pomodoro Timer"
+        app:titleTextColor="@android:color/background_light" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_stop"
@@ -79,7 +82,6 @@
         app:layout_constraintVertical_bias="0.341"
 
         />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
