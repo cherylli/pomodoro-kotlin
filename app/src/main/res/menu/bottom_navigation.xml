@@ -6,9 +6,9 @@
         android:title="Timer" />
 
     <item
-        android:id="@+id/nav_create"
+        android:id="@+id/nav_timer_setup"
         android:icon="@drawable/ic_add"
-        android:title="Add" />
+        android:title="Setup" />
 
     <item
         android:id="@+id/nav_settings"
