@@ -23,9 +23,15 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val startCountDownIntent = Intent(this, CountDownService::class.java)
-        startCountDownIntent.putExtra("timeRemain", 15000.toLong())
-        startService(startCountDownIntent)
+        fab_play.setOnClickListener{
+            val startCountDownIntent = Intent(this, CountDownService::class.java)
+            startCountDownIntent.putExtra("timeRemain", 15000.toLong())
+            startService(startCountDownIntent)
+        }
+
+        fab_stop.setOnClickListener{
+            stopService(Intent(this, CountDownService::class.java))
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
