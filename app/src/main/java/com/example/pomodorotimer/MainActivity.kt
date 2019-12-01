@@ -15,7 +15,9 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-
+    var counting = false
+    var resume = false  // turn to true when you clicked pause
+    var toCount: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,14 +25,64 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+
         fab_play.setOnClickListener{
+
+            Log.i("timerapp", "clicked timer start")
+
+            // don't start a new timer if already counting
+            if (counting){
+                Log.i("timerapp", "ignore duplicate starting request")
+                return@setOnClickListener
+            }
+
+
+            if (resume){
+                // if resume, use the previous remained time
+                Log.i("timerapp", "resume with previous $toCount")
+            }else{
+                toCount = 20000
+                Log.i("timerapp", "start a new timer with  $toCount")
+            }
+
+            resume = false
+            counting = true
+
             val startCountDownIntent = Intent(this, CountDownService::class.java)
-            startCountDownIntent.putExtra("timeRemain", 15000.toLong())
+            startCountDownIntent.putExtra("toCount", toCount)
             startService(startCountDownIntent)
+
         }
 
+        // pause also destroy the service, save the remaining time,  make a new one to continue later
+        fab_pause.setOnClickListener{
+            Log.i("timerapp", "clicked timer pause")
+
+            if (counting){
+                counting = false
+                resume = true
+                stopService(Intent(this, CountDownService::class.java))
+            }
+
+            // do nothing if timer is not running, click pause when timer is stopped has effect
+
+        }
+
+        // stop means cancel the timer
         fab_stop.setOnClickListener{
-            stopService(Intent(this, CountDownService::class.java))
+            Log.i("timerapp", "clicked timer stop(cancel)")
+
+
+            // if it is running, and you clicked cancel, destroy the service
+            if (counting){
+                counting = false
+                stopService(Intent(this, CountDownService::class.java))
+
+            // if it is already pause, service is already destroy, you just update here in the activity
+            }else{
+                resume = false
+                handleCancel();
+            }
         }
     }
 
@@ -44,20 +96,20 @@ class MainActivity : AppCompatActivity() {
     // Receiver receive the background count down info to update the countdown
     private val br: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            updateGUI(intent)
+            handleCountDown(intent)
         }
     }
 
 
     override fun onResume() {
         super.onResume()
-        println("on resume")
+        Log.i("timerapp", "on resume")
         registerReceiver(br, IntentFilter(CountDownService.COUNTDOWN_BR))
     }
 
     override fun onPause() {
         super.onPause()
-        println("on pause")
+        Log.i("timerapp", "on pause")
     }
 
     override fun onStop() {
@@ -65,7 +117,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        println("killed")
+        Log.i("timerapp", "on destroy")
         unregisterReceiver(br)
         stopService(Intent(this, CountDownService::class.java))
         super.onDestroy()
@@ -73,25 +125,42 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onBackPressed() {
-        println("back button pressed")
-
+        Log.i("timerapp", "on back button")
         val intent = Intent(Intent.ACTION_MAIN)
         intent.addCategory(Intent.CATEGORY_HOME)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
     }
 
-    private fun updateGUI(intent: Intent) {
+    private fun handleCancel(){
+        val countDownView: TextView = findViewById(R.id.textView_countdown)
+        countDownView.setText("Canceled")
+    }
 
-        if (intent.extras != null) {
-            val millisUntilFinished = intent.getLongExtra("timeRemain", 0)
+    private fun handleCountDown(intent: Intent) {
 
-            val countDownView: TextView = findViewById(R.id.textView_countdown)
+        val countDownView: TextView = findViewById(R.id.textView_countdown)
 
-            if (millisUntilFinished >= 1000){
+        // if service report timer is force stopped and there is no need to resume, it is a cancel
+        if (intent.hasExtra("timerStopped") and intent.getBooleanExtra("timerStopped", false) and !resume){
+
+            handleCancel()
+
+         // normal gui update on each tick
+        }else if (intent.hasExtra("toCount")){
+
+            // on each tick, update the GUI save the timeRemain into toCount for pause
+
+            val millisUntilFinished = intent.getLongExtra("toCount", 0)
+
+            if (millisUntilFinished > 1000){
                 countDownView.setText( (millisUntilFinished / 1000).toString())
+                toCount = millisUntilFinished
+
+            // count down finish
             }else{
                 countDownView.setText("Done")
+                counting = false
             }
 
         }
