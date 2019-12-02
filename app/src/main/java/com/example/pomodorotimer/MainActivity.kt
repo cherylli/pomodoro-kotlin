@@ -17,6 +17,14 @@ class MainActivity : AppCompatActivity() {
 
     var counting = false
     var resume = false  // turn to true when you clicked pause
+    val workTimer: Long = 15000
+    val breakTimer: Long = 5000
+    private var workState = WorkState.Work //default to start with work timer
+
+    enum class WorkState{
+        Work,Break
+    }
+
     var toCount: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +49,11 @@ class MainActivity : AppCompatActivity() {
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
             }else{
-                toCount = 20000
+                toCount = when (workState) {
+                    WorkState.Work -> workTimer
+                    else -> breakTimer
+                }
+
                 Log.i("timerapp", "start a new timer with  $toCount")
             }
 
@@ -78,10 +90,10 @@ class MainActivity : AppCompatActivity() {
                 counting = false
                 stopService(Intent(this, CountDownService::class.java))
 
-            // if it is already pause, service is already destroy, you just update here in the activity
+                // if it is already pause, service is already destroy, you just update here in the activity
             }else{
                 resume = false
-                handleCancel();
+                handleCancel()
             }
         }
     }
@@ -146,7 +158,7 @@ class MainActivity : AppCompatActivity() {
 
             handleCancel()
 
-         // normal gui update on each tick
+            // normal gui update on each tick
         }else if (intent.hasExtra("toCount")){
 
             // on each tick, update the GUI save the timeRemain into toCount for pause
@@ -157,10 +169,31 @@ class MainActivity : AppCompatActivity() {
                 countDownView.setText( (millisUntilFinished / 1000).toString())
                 toCount = millisUntilFinished
 
-            // count down finish
+                // count down finish
             }else{
-                countDownView.setText("Done")
-                counting = false
+                when (workState) {
+                    WorkState.Work -> {
+                        // start the break timer
+                        workState = WorkState.Break
+                        stopService(Intent(this, CountDownService::class.java))
+                        val startCountDownIntent = Intent(this, CountDownService::class.java)
+                        startCountDownIntent.putExtra("toCount", breakTimer)
+                        startService(startCountDownIntent)
+                    }
+                    WorkState.Break -> {
+                        // start the work timer
+                        workState = WorkState.Work
+                        toCount = workTimer
+                        stopService(Intent(this, CountDownService::class.java))
+                        val startCountDownIntent = Intent(this, CountDownService::class.java)
+                        startCountDownIntent.putExtra("toCount", workTimer)
+                        startService(startCountDownIntent)
+                    }
+                    //countDownView.setText("Done")
+                    //counting = false
+                }
+                //countDownView.setText("Done")
+                //counting = false
             }
 
         }
