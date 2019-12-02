@@ -17,14 +17,6 @@ class MainActivity : AppCompatActivity() {
 
     var counting = false
     var resume = false  // turn to true when you clicked pause
-    val workTimer: Long = 15000
-    val breakTimer: Long = 5000
-    private var workState = WorkState.Work //default to start with work timer
-
-    enum class WorkState{
-        Work,Break
-    }
-
     var toCount: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,12 +41,7 @@ class MainActivity : AppCompatActivity() {
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
             }else{
-                if (workState == WorkState.Work){
-                    toCount = workTimer
-                }else{
-                    toCount = breakTimer
-                }
-
+                toCount = 20000
                 Log.i("timerapp", "start a new timer with  $toCount")
             }
 
@@ -94,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             // if it is already pause, service is already destroy, you just update here in the activity
             }else{
                 resume = false
-                handleCancel()
+                handleCancel();
             }
         }
     }
@@ -172,24 +159,8 @@ class MainActivity : AppCompatActivity() {
 
             // count down finish
             }else{
-                if (workState==WorkState.Work){
-                    // start the break timer
-                    workState = WorkState.Break
-                    stopService(Intent(this, CountDownService::class.java))
-                    val startCountDownIntent = Intent(this, CountDownService::class.java)
-                    startCountDownIntent.putExtra("toCount", breakTimer)
-                    startService(startCountDownIntent)
-                }else if (workState==WorkState.Break){
-                    // start the work timer
-                    workState = WorkState.Work
-                    toCount = workTimer
-                    stopService(Intent(this, CountDownService::class.java))
-                    val startCountDownIntent = Intent(this, CountDownService::class.java)
-                    startCountDownIntent.putExtra("toCount", workTimer)
-                    startService(startCountDownIntent)
-                }
-                //countDownView.setText("Done")
-                //counting = false
+                countDownView.setText("Done")
+                counting = false
             }
 
         }
