@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity() {
             resume = false
             counting = true
 
+            textView_countdown.setTextColor(Color.parseColor("#3CCF25"))
             val startCountDownIntent = Intent(this, CountDownService::class.java)
             startCountDownIntent.putExtra("toCount", toCount)
             startService(startCountDownIntent)
@@ -174,17 +176,19 @@ class MainActivity : AppCompatActivity() {
                 when (workState) {
                     WorkState.Work -> {
                         // start the break timer
-                        workState = WorkState.Break
                         stopService(Intent(this, CountDownService::class.java))
+                        workState = WorkState.Break
+                        textView_countdown.setTextColor(Color.parseColor("#C94028"))
                         val startCountDownIntent = Intent(this, CountDownService::class.java)
                         startCountDownIntent.putExtra("toCount", breakTimer)
                         startService(startCountDownIntent)
                     }
                     WorkState.Break -> {
                         // start the work timer
+                        stopService(Intent(this, CountDownService::class.java))
                         workState = WorkState.Work
                         toCount = workTimer
-                        stopService(Intent(this, CountDownService::class.java))
+                        textView_countdown.setTextColor(Color.parseColor("#3CCF25"))
                         val startCountDownIntent = Intent(this, CountDownService::class.java)
                         startCountDownIntent.putExtra("toCount", workTimer)
                         startService(startCountDownIntent)
