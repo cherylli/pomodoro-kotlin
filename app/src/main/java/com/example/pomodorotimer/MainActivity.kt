@@ -44,8 +44,6 @@ class MainActivity : AppCompatActivity() {
                 Log.i("timerapp", "ignore duplicate starting request")
                 return@setOnClickListener
             }
-
-
             if (resume){
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
@@ -60,9 +58,8 @@ class MainActivity : AppCompatActivity() {
 
             resume = false
             counting = true
-
-            textView_countdown.setTextColor(Color.parseColor("#3CCF25"))
             val startCountDownIntent = Intent(this, CountDownService::class.java)
+            textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
             startCountDownIntent.putExtra("toCount", toCount)
             startService(startCountDownIntent)
 
@@ -175,23 +172,10 @@ class MainActivity : AppCompatActivity() {
             }else{
                 when (workState) {
                     WorkState.Work -> {
-                        // start the break timer
-                        stopService(Intent(this, CountDownService::class.java))
-                        workState = WorkState.Break
-                        textView_countdown.setTextColor(Color.parseColor("#C94028"))
-                        val startCountDownIntent = Intent(this, CountDownService::class.java)
-                        startCountDownIntent.putExtra("toCount", breakTimer)
-                        startService(startCountDownIntent)
+                        startBreakTimer()
                     }
                     WorkState.Break -> {
-                        // start the work timer
-                        stopService(Intent(this, CountDownService::class.java))
-                        workState = WorkState.Work
-                        toCount = workTimer
-                        textView_countdown.setTextColor(Color.parseColor("#3CCF25"))
-                        val startCountDownIntent = Intent(this, CountDownService::class.java)
-                        startCountDownIntent.putExtra("toCount", workTimer)
-                        startService(startCountDownIntent)
+                        startWorkTimer()
                     }
                     //countDownView.setText("Done")
                     //counting = false
@@ -203,4 +187,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startBreakTimer(){
+        val startCountDownIntent = Intent(this, CountDownService::class.java)
+
+        if(counting) stopService(Intent(this, CountDownService::class.java))
+        workState = WorkState.Break
+        textView_countdown.setTextColor(getResources().getColor(R.color.colorBreak))
+        startCountDownIntent.putExtra("toCount", breakTimer)
+        startService(startCountDownIntent)
+    }
+
+    private fun startWorkTimer(){
+        val startCountDownIntent = Intent(this, CountDownService::class.java)
+
+        if(counting) stopService(Intent(this, CountDownService::class.java))
+        workState = WorkState.Work
+        toCount = workTimer
+        textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
+        startCountDownIntent.putExtra("toCount", workTimer)
+        startService(startCountDownIntent)
+    }
 }
