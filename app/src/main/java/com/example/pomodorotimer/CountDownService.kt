@@ -38,7 +38,7 @@ class CountDownService : Service() {
         timer.cancel()
 
         // timer stopped can be due to pause or stop(cancel)
-        bi.putExtra("timerStopped", true);
+        bi.putExtra("timerStopped", true)
         sendBroadcast(bi)
 
         return super.onDestroy()
@@ -57,15 +57,15 @@ class CountDownService : Service() {
 
                     toCount = millisUntilFinished
 
-                    bi.putExtra("toCount", toCount);
-                    Log.i("timerapp", toCount.toString());
+                    bi.putExtra("toCount", toCount)
+                    Log.i("timerapp", toCount.toString())
                     sendBroadcast(bi)
                 }
 
                 override fun onFinish() {
 
                     Log.i("timerapp", "timer finish")
-                    bi.putExtra("toCount", -1.toLong());
+                    bi.putExtra("toCount", -1.toLong())
                     sendBroadcast(bi)
                 }
             }
@@ -77,7 +77,7 @@ class CountDownService : Service() {
         }
 
 
-        return super.onStartCommand(intent, flags, startId);
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onBind(arg0: Intent?): IBinder? {

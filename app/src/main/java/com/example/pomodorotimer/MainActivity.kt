@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
             }else{
+                textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
                 toCount = when (workState) {
                     WorkState.Work -> workTimer
                     else -> breakTimer
@@ -59,7 +60,6 @@ class MainActivity : AppCompatActivity() {
             resume = false
             counting = true
             val startCountDownIntent = Intent(this, CountDownService::class.java)
-            textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
             startCountDownIntent.putExtra("toCount", toCount)
             startService(startCountDownIntent)
 
