@@ -10,9 +10,11 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuInflater
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -65,7 +67,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun makeToast(message:String){
 
+        val toast = Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT)
+        toast.setGravity(Gravity.TOP, 0, 200)
+        toast.show()
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,10 +103,10 @@ class MainActivity : AppCompatActivity() {
 
             Log.i("timerapp", "clicked timer start")
 
-
             // don't start a new timer if already counting
             if (counting){
                 Log.i("timerapp", "ignore duplicate starting request")
+                makeToast("Already started")
                 return@setOnClickListener
             }
 
@@ -106,7 +114,9 @@ class MainActivity : AppCompatActivity() {
             if (resume){
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
+                makeToast("Resume timer")
             }else{
+                makeToast("Starting timer")
                 toCount = when (workState) {
                     WorkState.Work -> workTimer
                     else -> breakTimer
@@ -129,19 +139,21 @@ class MainActivity : AppCompatActivity() {
             Log.i("timerapp", "clicked timer pause")
 
             if (counting){
+                makeToast("Pause timer")
                 counting = false
                 resume = true
                 stopService(Intent(this, CountDownService::class.java))
+            }else{
+                // do nothing if timer is not running, click pause when timer is stopped has effect
+                makeToast("Already pause")
             }
-
-            // do nothing if timer is not running, click pause when timer is stopped has effect
 
         }
 
         // stop means cancel the timer
         fab_stop.setOnClickListener{
             Log.i("timerapp", "clicked timer stop(cancel)")
-
+            makeToast("Cancel timer")
 
             // if it is running, and you clicked cancel, destroy the service
             if (counting){
