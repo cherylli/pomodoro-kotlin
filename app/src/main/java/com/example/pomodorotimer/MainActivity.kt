@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
 
 
          builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.cuteicon)
+            .setSmallIcon(R.drawable.timericon)
             .setContentTitle("Pomodoro Timer")
             .setContentText("Timer cmoplete!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
