@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -127,9 +126,10 @@ class MainActivity : AppCompatActivity() {
 
             resume = false
             counting = true
-            val startCountDownIntent = Intent(this, CountDownService::class.java)
-            startCountDownIntent.putExtra("toCount", toCount)
-            startService(startCountDownIntent)
+            startTimer(workState)
+            //val startCountDownIntent = Intent(this, CountDownService::class.java)
+            //startCountDownIntent.putExtra("toCount", toCount)
+            //startService(startCountDownIntent)
 
         }
 
@@ -241,41 +241,48 @@ class MainActivity : AppCompatActivity() {
 
                 // count down finish
             }else{
+                //stopService(Intent(this, CountDownService::class.java))
                 when (workState) {
                     WorkState.Work -> {
-
-                        startBreakTimer()
-
                         // start the break timer
-                        workState = WorkState.Break
-                        stopService(Intent(this, CountDownService::class.java))
-                        val startCountDownIntent = Intent(this, CountDownService::class.java)
-
+                        startTimer(WorkState.Break)
                         sendNotification()
-
-                        startCountDownIntent.putExtra("toCount", breakTimer)
-                        startService(startCountDownIntent)
-
                     }
                     WorkState.Break -> {
-                        startWorkTimer()
+                        startTimer(WorkState.Work)
                     }
                 }
             }
         }
     }
 
-    private fun startBreakTimer(){
+    private fun startTimer(ws:WorkState){
         val startCountDownIntent = Intent(this, CountDownService::class.java)
 
+        //stop the service first if its counting
         if(counting) stopService(Intent(this, CountDownService::class.java))
-        workState = WorkState.Break
-        textView_countdown.setTextColor(getResources().getColor(R.color.colorBreak))
-        startCountDownIntent.putExtra("toCount", breakTimer)
+
+        when(ws){
+            WorkState.Break-> {
+                workState = WorkState.Break
+                if (!resume and counting){
+                    toCount = breakTimer
+                }
+                textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
+            }
+            WorkState.Work->{
+                workState = WorkState.Work
+                if (!resume and counting){
+                    toCount = workTimer
+                }
+                textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+            }
+        }
+        startCountDownIntent.putExtra("toCount", toCount)
         startService(startCountDownIntent)
     }
 
-    private fun startWorkTimer(){
+    /*private fun startWorkTimer(){
         val startCountDownIntent = Intent(this, CountDownService::class.java)
 
         if(counting) stopService(Intent(this, CountDownService::class.java))
@@ -284,5 +291,5 @@ class MainActivity : AppCompatActivity() {
         textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
         startCountDownIntent.putExtra("toCount", workTimer)
         startService(startCountDownIntent)
-    }
+    }*/
 }
