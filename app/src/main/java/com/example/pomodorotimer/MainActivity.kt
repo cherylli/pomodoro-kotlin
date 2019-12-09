@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
          builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.timericon)
             .setContentTitle("Pomodoro Timer")
-            .setContentText("Timer cmoplete!")
+            .setContentText("Timer complete!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
