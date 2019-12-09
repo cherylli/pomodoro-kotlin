@@ -1,37 +1,102 @@
 package com.example.pomodorotimer
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuInflater
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
 
+
     var counting = false
     var resume = false  // turn to true when you clicked pause
     val workTimer: Long = 15000
     val breakTimer: Long = 5000
+    var toCount: Long = 0
+
     private var workState = WorkState.Work //default to start with work timer
+
 
     enum class WorkState{
         Work,Break
     }
 
-    var toCount: Long = 0
+
+    val channelId = "pomodoroTimer"
+    lateinit var builder: NotificationCompat.Builder
+
+
+    private fun createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.channel_name)
+            val descriptionText = getString(R.string.channel_description)
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(channelId, name, importance).apply {
+                description = descriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+
+    private fun sendNotification(){
+        with(NotificationManagerCompat.from(this)) {
+            // notificationId is a unique int for each notification that you must define
+            notify(12345, builder.build())
+        }
+    }
+
+    private fun makeToast(message:String){
+
+        val toast = Toast.makeText(applicationContext, message, Toast.LENGTH_SHORT)
+        toast.setGravity(Gravity.TOP, 0, 200)
+        toast.show()
+
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        createNotificationChannel()
+
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+
+
+         builder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.timericon)
+            .setContentTitle("Pomodoro Timer")
+            .setContentText("Timer complete!")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
 
 
         fab_play.setOnClickListener{
@@ -41,6 +106,7 @@ class MainActivity : AppCompatActivity() {
             // don't start a new timer if already counting
             if (counting){
                 Log.i("timerapp", "ignore duplicate starting request")
+                makeToast("Already started")
                 return@setOnClickListener
             }
 
@@ -48,7 +114,9 @@ class MainActivity : AppCompatActivity() {
             if (resume){
                 // if resume, use the previous remained time
                 Log.i("timerapp", "resume with previous $toCount")
+                makeToast("Resume timer")
             }else{
+                makeToast("Starting timer")
                 toCount = when (workState) {
                     WorkState.Work -> workTimer
                     else -> breakTimer
@@ -71,19 +139,21 @@ class MainActivity : AppCompatActivity() {
             Log.i("timerapp", "clicked timer pause")
 
             if (counting){
+                makeToast("Pause timer")
                 counting = false
                 resume = true
                 stopService(Intent(this, CountDownService::class.java))
+            }else{
+                // do nothing if timer is not running, click pause when timer is stopped has effect
+                makeToast("Already pause")
             }
-
-            // do nothing if timer is not running, click pause when timer is stopped has effect
 
         }
 
         // stop means cancel the timer
         fab_stop.setOnClickListener{
             Log.i("timerapp", "clicked timer stop(cancel)")
-
+            makeToast("Cancel timer")
 
             // if it is running, and you clicked cancel, destroy the service
             if (counting){
@@ -96,6 +166,7 @@ class MainActivity : AppCompatActivity() {
                 handleCancel()
             }
         }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -177,6 +248,9 @@ class MainActivity : AppCompatActivity() {
                         workState = WorkState.Break
                         stopService(Intent(this, CountDownService::class.java))
                         val startCountDownIntent = Intent(this, CountDownService::class.java)
+
+                        sendNotification()
+
                         startCountDownIntent.putExtra("toCount", breakTimer)
                         startService(startCountDownIntent)
                     }
@@ -189,13 +263,8 @@ class MainActivity : AppCompatActivity() {
                         startCountDownIntent.putExtra("toCount", workTimer)
                         startService(startCountDownIntent)
                     }
-                    //countDownView.setText("Done")
-                    //counting = false
                 }
-                //countDownView.setText("Done")
-                //counting = false
             }
-
         }
     }
 
