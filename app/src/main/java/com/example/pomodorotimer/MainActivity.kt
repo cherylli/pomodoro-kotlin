@@ -123,10 +123,10 @@ class MainActivity : AppCompatActivity() {
 
                 Log.i("timerapp", "start a new timer with  $toCount")
             }
-
+            startTimer(workState)
             resume = false
             counting = true
-            startTimer(workState)
+
             //val startCountDownIntent = Intent(this, CountDownService::class.java)
             //startCountDownIntent.putExtra("toCount", toCount)
             //startService(startCountDownIntent)
@@ -282,14 +282,5 @@ class MainActivity : AppCompatActivity() {
         startService(startCountDownIntent)
     }
 
-    /*private fun startWorkTimer(){
-        val startCountDownIntent = Intent(this, CountDownService::class.java)
 
-        if(counting) stopService(Intent(this, CountDownService::class.java))
-        workState = WorkState.Work
-        toCount = workTimer
-        textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
-        startCountDownIntent.putExtra("toCount", workTimer)
-        startService(startCountDownIntent)
-    }*/
 }
