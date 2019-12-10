@@ -264,20 +264,19 @@ class MainActivity : AppCompatActivity() {
 
         when(ws){
             WorkState.Break-> {
-                workState = WorkState.Break
                 if (!resume and counting){
                     toCount = breakTimer
                 }
                 textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
             }
             WorkState.Work->{
-                workState = WorkState.Work
                 if (!resume and counting){
                     toCount = workTimer
                 }
                 textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
             }
         }
+        workState = ws
         startCountDownIntent.putExtra("toCount", toCount)
         startService(startCountDownIntent)
     }
