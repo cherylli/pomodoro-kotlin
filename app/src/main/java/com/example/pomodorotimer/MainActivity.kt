@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
 
     var counting = false
     var resume = false  // turn to true when you clicked pause
-    val workTimer: Long = 15000
-    val breakTimer: Long = 5000
+    var workTimer: Long = 15000
+    var breakTimer: Long = 5000
     var toCount: Long = 0
 
     private var workState = WorkState.Work //default to start with work timer
@@ -164,6 +164,13 @@ class MainActivity : AppCompatActivity() {
                 resume = false
                 handleCancel()
             }
+        }
+
+        button_set.setOnClickListener {
+            Log.i("timerapp", "clicked set button")
+            workTimer = editText_pomodoro.text.toString().toLong()*60000
+            breakTimer = editText_break.text.toString().toLong()*60000
+            Log.i("SetTimer","workTimer set to $workTimer, breakTimer set to $breakTimer")
         }
 
     }
