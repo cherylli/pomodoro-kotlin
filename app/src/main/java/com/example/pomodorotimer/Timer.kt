@@ -10,6 +10,10 @@ class Timer {
     var breakTimer: Long = 0
     var workState = WorkState.Work //default to start with work timer
 
+    fun setTimer(){
+
+    }
+
     fun minusOneSecond(){
         secondToCount --
         if (secondToCount.toInt()==0 && minToCount.toInt()==0 && secondToCount.toInt()==0){
