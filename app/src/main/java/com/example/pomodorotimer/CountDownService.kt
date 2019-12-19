@@ -45,13 +45,13 @@ class CountDownService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        var sectoCount: Long = intent?.getLongExtra("toCount", -1) ?: -1
-        sectoCount++  // +1s to avoid some phone's service finish before our own timer class reaches 0
+        var secToCount: Long = intent?.getLongExtra("toCount", -1) ?: -1
+        secToCount++  // +1s to avoid some phone's service finish before our own timer class reaches 0
 
 
         try {
 
-            timer = object:CountDownTimer(sectoCount*1000, 1000) {  // counting down 1s at a time
+            timer = object:CountDownTimer(secToCount*1000, 1000) {  // counting down 1s at a time
                 override fun onTick(millisUntilFinished: Long) {
 
                     var msRemain:Long = millisUntilFinished
