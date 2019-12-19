@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.Gravity
 import android.view.Menu
@@ -23,7 +24,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val timer = Timer()
+    private var timer = Timer()
 
 
     private val channelId = "pomodoroTimer"
@@ -99,11 +100,14 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-            timer.workTimer = if (timer.workTimer > 0) timer.workTimer else 10  // lazy to type in
-            timer.breakTimer = if (timer.breakTimer > 0) timer.breakTimer else 8  // lazy to type in
+
+            timer.workTimer = if (timer.workTimer > 0) timer.workTimer else 1  // lazy to type in
+            timer.breakTimer = if (timer.breakTimer > 0) timer.breakTimer else 2  // lazy to type in
 
 
             startTimer()
+
+
 
         }
 
@@ -238,6 +242,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setTimerTextColor(){
+        when(timer.workState){
+            WorkState.Break -> textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
+            WorkState.Work -> textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+        }
+    }
+
     private fun startTimer() {
 
         val startCountDownIntent = Intent(this, CountDownService::class.java)
@@ -249,7 +260,7 @@ class MainActivity : AppCompatActivity() {
                 if (!timer.needResume) {
                     timer.loadBreakTimer()
                 }
-                textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
+                setTimerTextColor()
             }
             WorkState.Work -> {
 
@@ -259,7 +270,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
                 }
-                textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+                setTimerTextColor()
             }
         }
 
@@ -268,13 +279,38 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-
-
         timer.needResume = false
         timer.isCounting = true
         startCountDownIntent.putExtra("toCount", timer.toSeconds())
         startService(startCountDownIntent)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putLong("timeLeftInSecond",timer.toSeconds())
+        outState.putInt("workState",timer.workState.ordinal)
+        outState.putBoolean("isCounting",timer.isCounting)
+        outState.putBoolean("needResume",timer.needResume)
+        outState.putInt("workTimer",timer.workTimer)
+        outState.putInt("breakTimer",timer.breakTimer)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+
+        Log.i("Restore Instance", "timeLeftInSeconds = ${timer.toSeconds()}")
+        timer.restoreFromSeconds(savedInstanceState.getLong("timeLeftInSecond"))
+        timer.workState = WorkState.getValueFromInt(savedInstanceState.getInt("workState"))
+        timer.needResume = savedInstanceState.getBoolean("needResume")
+        timer.isCounting = savedInstanceState.getBoolean("isCounting")
+        timer.workTimer = savedInstanceState.getInt("workTimer")
+        timer.breakTimer = savedInstanceState.getInt("breakTimer")
+
+        val startCountDownIntent = Intent(this, CountDownService::class.java)
+        startCountDownIntent.putExtra("toCount", timer.toSeconds())
+        startService(startCountDownIntent)
+        setTimerTextColor()
+        //startTimer()
+    }
 
 }
