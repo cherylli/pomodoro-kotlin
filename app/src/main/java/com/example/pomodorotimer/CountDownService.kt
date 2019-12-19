@@ -37,8 +37,7 @@ class CountDownService : Service() {
 
         timer.cancel()
 
-        // timer stopped can be due to pause or stop(cancel)
-        bi.putExtra("timerStopped", true)
+        bi.putExtra("forceStopped", true)
         sendBroadcast(bi)
 
         return super.onDestroy()
@@ -46,19 +45,19 @@ class CountDownService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        var toCount: Long = intent?.getLongExtra("toCount", -1) ?: -1
+        var sectoCount: Long = intent?.getLongExtra("toCount", -1) ?: -1
+        sectoCount++  // +1s to avoid some phone's service finish before our own timer class reaches 0
 
-        Log.i("timerapp" ,toCount.toString())
 
         try {
 
-            timer = object:CountDownTimer(toCount, 1000) {  // counting donw 1s at a time
+            timer = object:CountDownTimer(sectoCount*1000, 1000) {  // counting down 1s at a time
                 override fun onTick(millisUntilFinished: Long) {
 
-                    toCount = millisUntilFinished
+                    var msRemain:Long = millisUntilFinished
 
-                    bi.putExtra("toCount", toCount)
-                    Log.i("timerapp", toCount.toString())
+                    Log.i("timerapp", msRemain.toString())
+                    bi.putExtra("toCount", msRemain)
                     sendBroadcast(bi)
                 }
 
@@ -88,4 +87,3 @@ class CountDownService : Service() {
         const val COUNTDOWN_BR = "CountDownService.countdown_br"
     }
 }
-

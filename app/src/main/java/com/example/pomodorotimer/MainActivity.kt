@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
 
-         builder = NotificationCompat.Builder(this, channelId)
+        builder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.timericon)
             .setContentTitle("Pomodoro Timer")
             .setContentText("Timer complete!")
@@ -93,28 +93,18 @@ class MainActivity : AppCompatActivity() {
             Log.i("timerapp", "clicked timer start")
 
             // don't start a new timer if already counting
-            if (timer.counting){
+            if (timer.isCounting){
                 Log.i("timerapp", "ignore duplicate starting request")
                 makeToast("Already started")
                 return@setOnClickListener
             }
-            if (timer.resume){
-                // if resume, use the previous remained time
-                Log.i("timerapp", "resume with previous ${timer.secondToCount}")
-                makeToast("Resume timer")
-            }else{
-                textView_countdown.setTextColor(getResources().getColor(R.color.colorWork))
-                makeToast("Starting timer")
-                timer.secondToCount = when (timer.workState) {
-                    WorkState.Work -> timer.workTimer
-                    else -> timer.breakTimer
-                }
 
-                Log.i("timerapp", "start a new timer with  ${timer.secondToCount}")
-            }
-            startTimer(timer.workState)
-            timer.resume = false
-            timer.counting = true
+
+            timer.workTimer = if (timer.workTimer > 0) timer.workTimer else 10  // lazy to type in
+            timer.breakTimer = if (timer.breakTimer > 0) timer.breakTimer else 8  // lazy to type in
+
+
+            startTimer()
 
         }
 
@@ -122,13 +112,13 @@ class MainActivity : AppCompatActivity() {
         fab_pause.setOnClickListener{
             Log.i("timerapp", "clicked timer pause")
 
-            if (timer.counting){
+            if (timer.isCounting){
                 makeToast("Pause timer")
-                timer.counting = false
-                timer.resume = true
                 stopService(Intent(this, CountDownService::class.java))
+                timer.isCounting = false
+                timer.needResume = true
             }else{
-                // do nothing if timer is not running, click pause when timer is stopped has effect
+                // do nothing if timer is not running, click pause when timer is stopped has no effect
                 makeToast("Already pause")
             }
 
@@ -140,21 +130,25 @@ class MainActivity : AppCompatActivity() {
             makeToast("Cancel timer")
 
             // if it is running, and you clicked cancel, destroy the service
-            if (timer.counting){
-                timer.counting = false
+            if (timer.isCounting){
                 stopService(Intent(this, CountDownService::class.java))
-
-                // if it is already pause, service is already destroy, you just update here in the activity
-            }else{
-                timer.resume = false
-                handleCancel()
             }
+
+            // if it is already pause, service is already destroy, you just update here in the activity
+
+            val countDownView: TextView = findViewById(R.id.textView_countdown)
+            countDownView.setText("Canceled")
+            timer.endTimer()
+            timer.workState = WorkState.Work
+
         }
 
+
+        // TODO force numeric input
         button_set.setOnClickListener {
             Log.i("timerapp", "clicked set button")
-            timer.workTimer = editText_pomodoro.text.toString().toLong()*60000
-            timer.breakTimer = editText_break.text.toString().toLong()*60000
+            timer.workTimer = editText_pomodoro.text.toString().toInt()
+            timer.breakTimer = editText_break.text.toString().toInt()
             Log.i("SetTimer","workTimer set to ${timer.workTimer}, breakTimer set to ${timer.breakTimer}")
         }
 
@@ -187,6 +181,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
+        Log.i("timerapp", "on Stop")
         super.onStop()
     }
 
@@ -206,72 +201,76 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun handleCancel(){
-        val countDownView: TextView = findViewById(R.id.textView_countdown)
-        countDownView.setText("Canceled")
-    }
-
+    // on each tick, update the GUI
     private fun handleCountDown(intent: Intent) {
 
         val countDownView: TextView = findViewById(R.id.textView_countdown)
 
-        // if service report timer is force stopped and there is no need to resume, it is a cancel
-        if (intent.hasExtra("timerStopped")
-            and intent.getBooleanExtra("timerStopped", false)
-            and !timer.resume){
 
-            handleCancel()
+        // do not react if timer is force stopped
+        if (intent.hasExtra("toCount") && !intent.hasExtra("forceStopped")){
 
-            // normal gui update on each tick
-        }else if (intent.hasExtra("toCount")){
+            countDownView.setText(timer.displayTime())
 
-            // on each tick, update the GUI save the timeRemain into toCount for pause
+            timer.minusOneSecond()
 
-            val millisUntilFinished = intent.getLongExtra("toCount", 0)
+            if (!timer.isCounting){
 
-            if (millisUntilFinished > 1000){
-                countDownView.setText( (millisUntilFinished / 1000).toString())
-                timer.secondToCount = millisUntilFinished
+                stopService(Intent(this, CountDownService::class.java))
 
-                // count down finish
-            }else{
-                //stopService(Intent(this, CountDownService::class.java))
+                // switch workstate when timer is finish
                 when (timer.workState) {
                     WorkState.Work -> {
-                        // start the break timer
-                        startTimer(WorkState.Break)
+
+                        timer.workState = WorkState.Break
                         sendNotification()
+                        startTimer()
                     }
                     WorkState.Break -> {
-                        startTimer(WorkState.Work)
+
+                        timer.workState = WorkState.Work
+                        startTimer()
                     }
                 }
             }
         }
     }
 
-    private fun startTimer(ws:WorkState){
+    private fun startTimer(){
+
         val startCountDownIntent = Intent(this, CountDownService::class.java)
 
-        //stop the service first if its counting
-        if(timer.counting) stopService(Intent(this, CountDownService::class.java))
+        when(timer.workState){
 
-        when(ws){
             WorkState.Break-> {
-                if (!timer.resume and timer.counting){
-                    timer.secondToCount = timer.breakTimer
+
+                if (!timer.needResume){
+                    timer.loadbreakTimer()
                 }
                 textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
             }
             WorkState.Work->{
-                if (!timer.resume and timer.counting){
-                    timer.secondToCount = timer.workTimer
+
+                if (!timer.needResume){
+                    timer.loadworkTimer()
+                    Log.i("timerapp", "start a new timer with  ${timer.displayTime()}")
+                }else{
+                    Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
                 }
                 textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
             }
         }
-        timer.workState = ws
-        startCountDownIntent.putExtra("toCount", timer.secondToCount)
+
+        if (timer.toSeconds() < 0){
+            makeToast("Invalid time")
+            return
+        }
+
+
+
+        timer.needResume = false
+        timer.isCounting = true
+        startCountDownIntent.putExtra("toCount", timer.toSeconds())
         startService(startCountDownIntent)
     }
 
