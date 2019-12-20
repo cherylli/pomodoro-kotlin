@@ -253,26 +253,32 @@ class MainActivity : AppCompatActivity() {
 
         val startCountDownIntent = Intent(this, CountDownService::class.java)
 
-        when (timer.workState) {
+        //if the timer is already running, e.g. on orientation change.
 
-            WorkState.Break -> {
+        //its a new timer
+        if (!timer.isCounting){
+            when (timer.workState) {
 
-                if (!timer.needResume) {
-                    timer.loadBreakTimer()
+                WorkState.Break -> {
+                    if (!timer.needResume) {
+                        timer.loadBreakTimer()
+                    }
+
                 }
-                setTimerTextColor()
-            }
-            WorkState.Work -> {
+                WorkState.Work -> {
 
-                if (!timer.needResume) {
-                    timer.loadWorkTimer()
-                    Log.i("timerapp", "start a new timer with  ${timer.displayTime()}")
-                } else {
-                    Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
+                    if (!timer.needResume) {
+                        timer.loadWorkTimer()
+                        Log.i("timerapp", "start a new timer with  ${timer.displayTime()}")
+                    } else {
+                        Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
+                    }
+
                 }
-                setTimerTextColor()
             }
         }
+
+
 
         if (timer.toSeconds() < 0) {
             makeToast("Invalid time")
@@ -281,6 +287,8 @@ class MainActivity : AppCompatActivity() {
 
         timer.needResume = false
         timer.isCounting = true
+        setTimerTextColor()
+        //textView_countdown.text = timer.displayTime()
         startCountDownIntent.putExtra("toCount", timer.toSeconds())
         startService(startCountDownIntent)
     }
@@ -306,15 +314,15 @@ class MainActivity : AppCompatActivity() {
         timer.workTimer = savedInstanceState.getInt("workTimer")
         timer.breakTimer = savedInstanceState.getInt("breakTimer")
 
+        
+        //restart timer if the timer is running else, just display time left
         if(timer.isCounting){
-            val startCountDownIntent = Intent(this, CountDownService::class.java)
-            startCountDownIntent.putExtra("toCount", timer.toSeconds())
-            startService(startCountDownIntent)
+            startTimer()
         }else{
+            setTimerTextColor()
             textView_countdown.text = timer.displayTime()
         }
-        setTimerTextColor()
-        //startTimer()
+
     }
 
 }
