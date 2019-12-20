@@ -81,7 +81,13 @@ class Timer{
     fun endTimer() {
         isCounting = false
         needResume = false
-        //reset timer
+    }
+
+    fun resetTimer(){
+        isCounting = false
+        needResume = false
+        //reset timer, set timer back to work stat
+        workState = WorkState.Work
         secondToCount=0
         minToCount= workTimer
         hourToCount=0

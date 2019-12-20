@@ -108,7 +108,6 @@ class MainActivity : AppCompatActivity() {
             startTimer()
 
 
-
         }
 
         // pause also destroy the service, save the remaining time,  make a new one to continue later
@@ -141,8 +140,7 @@ class MainActivity : AppCompatActivity() {
 
             val countDownView: TextView = findViewById(R.id.textView_countdown)
             countDownView.setText("Canceled")
-            timer.endTimer()
-            timer.workState = WorkState.Work
+            timer.resetTimer()
 
         }
 
@@ -242,8 +240,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setTimerTextColor(){
-        when(timer.workState){
+    private fun setTimerTextColor() {
+        when (timer.workState) {
             WorkState.Break -> textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
             WorkState.Work -> textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
         }
@@ -256,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         //if the timer is already running, e.g. on orientation change.
 
         //its a new timer
-        if (!timer.isCounting){
+        if (!timer.isCounting) {
             when (timer.workState) {
 
                 WorkState.Break -> {
@@ -295,12 +293,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putLong("timeLeftInSecond",timer.toSeconds())
-        outState.putInt("workState",timer.workState.ordinal)
-        outState.putBoolean("isCounting",timer.isCounting)
-        outState.putBoolean("needResume",timer.needResume)
-        outState.putInt("workTimer",timer.workTimer)
-        outState.putInt("breakTimer",timer.breakTimer)
+        outState.putLong("timeLeftInSecond", timer.toSeconds())
+        outState.putInt("workState", timer.workState.ordinal)
+        outState.putBoolean("isCounting", timer.isCounting)
+        outState.putBoolean("needResume", timer.needResume)
+        outState.putInt("workTimer", timer.workTimer)
+        outState.putInt("breakTimer", timer.breakTimer)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
@@ -314,11 +312,11 @@ class MainActivity : AppCompatActivity() {
         timer.workTimer = savedInstanceState.getInt("workTimer")
         timer.breakTimer = savedInstanceState.getInt("breakTimer")
 
-        
+
         //restart timer if the timer is running else, just display time left
-        if(timer.isCounting){
+        if (timer.isCounting) {
             startTimer()
-        }else{
+        } else {
             setTimerTextColor()
             textView_countdown.text = timer.displayTime()
         }
