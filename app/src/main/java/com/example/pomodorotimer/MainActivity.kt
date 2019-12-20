@@ -145,15 +145,41 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        // TODO force numeric input
         button_set.setOnClickListener {
+
             Log.i("timerapp", "clicked set button")
-            timer.workTimer = editText_pomodoro.text.toString().toInt()
-            timer.breakTimer = editText_break.text.toString().toInt()
+
+            val workTime = editText_pomodoro.text.toString()
+            val breakTime = editText_break.text.toString()
+
+            timer.workTimer = if (workTime.equals("")) 2 else workTime.toInt()
+            timer.breakTimer = if (breakTime.equals("")) 2 else breakTime.toInt()
+
             Log.i(
-                "SetTimer",
-                "workTimer set to ${timer.workTimer}, breakTimer set to ${timer.breakTimer}"
+                    "timerapp",
+                    "workTimer set to ${timer.workTimer}, breakTimer set to ${timer.breakTimer}"
             )
+
+
+            // if timer is not running and timer is not paused, display the time to count down
+            if (!timer.isCounting and !timer.needResume){
+
+
+                val countDownView: TextView = findViewById(R.id.textView_countdown)
+                timer.loadWorkTimer()
+                countDownView.text = timer.displayTime()
+                textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+
+                makeToast("Current session: Work ${timer.workTimer} min, break ${timer.breakTimer} min")
+
+            }else{
+                makeToast("Next session: Work ${timer.workTimer} min, break ${timer.breakTimer} min")
+            }
+
+            editText_pomodoro.setText(timer.workTimer.toString())
+            editText_break.setText(timer.breakTimer.toString())
+
+
         }
 
     }
@@ -214,9 +240,9 @@ class MainActivity : AppCompatActivity() {
         // do not react if timer is force stopped
         if (intent.hasExtra("toCount") && !intent.hasExtra("forceStopped")) {
 
+            timer.minusOneSecond()
             countDownView.text = timer.displayTime()
 
-            timer.minusOneSecond()
 
             if (!timer.isCounting) {
 
