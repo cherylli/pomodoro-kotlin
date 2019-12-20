@@ -81,5 +81,9 @@ class Timer{
     fun endTimer() {
         isCounting = false
         needResume = false
+        //reset timer
+        secondToCount=0
+        minToCount= workTimer
+        hourToCount=0
     }
 }

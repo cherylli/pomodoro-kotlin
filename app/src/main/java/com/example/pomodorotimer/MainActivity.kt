@@ -306,9 +306,13 @@ class MainActivity : AppCompatActivity() {
         timer.workTimer = savedInstanceState.getInt("workTimer")
         timer.breakTimer = savedInstanceState.getInt("breakTimer")
 
-        val startCountDownIntent = Intent(this, CountDownService::class.java)
-        startCountDownIntent.putExtra("toCount", timer.toSeconds())
-        startService(startCountDownIntent)
+        if(timer.isCounting){
+            val startCountDownIntent = Intent(this, CountDownService::class.java)
+            startCountDownIntent.putExtra("toCount", timer.toSeconds())
+            startService(startCountDownIntent)
+        }else{
+            textView_countdown.text = timer.displayTime()
+        }
         setTimerTextColor()
         //startTimer()
     }
