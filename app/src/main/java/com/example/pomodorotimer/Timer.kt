@@ -1,7 +1,7 @@
 package com.example.pomodorotimer
 
 
-class Timer {
+class Timer{
     private var hourToCount: Int = 0
     private var minToCount: Int = 0
     private var secondToCount: Int = 0
@@ -53,6 +53,12 @@ class Timer {
         return hourToCount.toLong() * 60 * 60 + minToCount.toLong() * 60 + secondToCount.toLong()
     }
 
+    fun restoreFromSeconds(s:Long){
+        secondToCount = (s % 60).toInt()
+        minToCount = (((s-secondToCount)/60) % 60).toInt()
+        hourToCount = ((s-secondToCount-minToCount*60)/3600).toInt()
+    }
+
     fun minusOneSecond() {
 
         if (hourToCount == 0 && minToCount == 0 && secondToCount == 0) {
@@ -75,5 +81,15 @@ class Timer {
     fun endTimer() {
         isCounting = false
         needResume = false
+    }
+
+    fun resetTimer(){
+        isCounting = false
+        needResume = false
+        //reset timer, set timer back to work stat
+        workState = WorkState.Work
+        secondToCount=0
+        minToCount= workTimer
+        hourToCount=0
     }
 }

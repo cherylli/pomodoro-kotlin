@@ -109,12 +109,15 @@
         android:id="@+id/textView_countdown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="308dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="24dp"
         android:textSize="@dimen/timerTextSize"
+        app:layout_constraintBottom_toTopOf="@+id/fab_pause"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editText_break"
+        app:layout_constraintVertical_bias="0.618"
         tools:text="05:00" />
 
 

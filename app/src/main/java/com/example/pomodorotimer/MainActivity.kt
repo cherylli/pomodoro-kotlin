@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.Gravity
 import android.view.Menu
@@ -23,7 +24,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    private val timer = Timer()
+    private var timer = Timer()
 
 
     private val channelId = "pomodoroTimer"
@@ -99,11 +100,13 @@ class MainActivity : AppCompatActivity() {
             }
 
 
-            timer.workTimer = if (timer.workTimer > 0) timer.workTimer else 10  // lazy to type in
-            timer.breakTimer = if (timer.breakTimer > 0) timer.breakTimer else 8  // lazy to type in
+
+            timer.workTimer = if (timer.workTimer > 0) timer.workTimer else 1  // lazy to type in
+            timer.breakTimer = if (timer.breakTimer > 0) timer.breakTimer else 2  // lazy to type in
 
 
             startTimer()
+
 
         }
 
@@ -137,21 +140,46 @@ class MainActivity : AppCompatActivity() {
 
             val countDownView: TextView = findViewById(R.id.textView_countdown)
             countDownView.setText("Canceled")
-            timer.endTimer()
-            timer.workState = WorkState.Work
+            timer.resetTimer()
 
         }
 
 
-        // TODO force numeric input
         button_set.setOnClickListener {
+
             Log.i("timerapp", "clicked set button")
-            timer.workTimer = editText_pomodoro.text.toString().toInt()
-            timer.breakTimer = editText_break.text.toString().toInt()
+
+            val workTime = editText_pomodoro.text.toString()
+            val breakTime = editText_break.text.toString()
+
+            timer.workTimer = if (workTime.equals("")) 2 else workTime.toInt()
+            timer.breakTimer = if (breakTime.equals("")) 2 else breakTime.toInt()
+
             Log.i(
-                "SetTimer",
-                "workTimer set to ${timer.workTimer}, breakTimer set to ${timer.breakTimer}"
+                    "timerapp",
+                    "workTimer set to ${timer.workTimer}, breakTimer set to ${timer.breakTimer}"
             )
+
+
+            // if timer is not running and timer is not paused, display the time to count down
+            if (!timer.isCounting and !timer.needResume){
+
+
+                val countDownView: TextView = findViewById(R.id.textView_countdown)
+                timer.loadWorkTimer()
+                countDownView.text = timer.displayTime()
+                textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+
+                makeToast("Current session: Work ${timer.workTimer} min, break ${timer.breakTimer} min")
+
+            }else{
+                makeToast("Next session: Work ${timer.workTimer} min, break ${timer.breakTimer} min")
+            }
+
+            editText_pomodoro.setText(timer.workTimer.toString())
+            editText_break.setText(timer.breakTimer.toString())
+
+
         }
 
     }
@@ -212,9 +240,9 @@ class MainActivity : AppCompatActivity() {
         // do not react if timer is force stopped
         if (intent.hasExtra("toCount") && !intent.hasExtra("forceStopped")) {
 
+            timer.minusOneSecond()
             countDownView.text = timer.displayTime()
 
-            timer.minusOneSecond()
 
             if (!timer.isCounting) {
 
@@ -238,43 +266,87 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setTimerTextColor() {
+        when (timer.workState) {
+            WorkState.Break -> textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
+            WorkState.Work -> textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
+        }
+    }
+
     private fun startTimer() {
 
         val startCountDownIntent = Intent(this, CountDownService::class.java)
 
-        when (timer.workState) {
+        //if the timer is already running, e.g. on orientation change.
 
-            WorkState.Break -> {
+        //its a new timer
+        if (!timer.isCounting) {
+            when (timer.workState) {
 
-                if (!timer.needResume) {
-                    timer.loadBreakTimer()
+                WorkState.Break -> {
+                    if (!timer.needResume) {
+                        timer.loadBreakTimer()
+                    }
+
                 }
-                textView_countdown.setTextColor(resources.getColor(R.color.colorBreak))
-            }
-            WorkState.Work -> {
+                WorkState.Work -> {
 
-                if (!timer.needResume) {
-                    timer.loadWorkTimer()
-                    Log.i("timerapp", "start a new timer with  ${timer.displayTime()}")
-                } else {
-                    Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
+                    if (!timer.needResume) {
+                        timer.loadWorkTimer()
+                        Log.i("timerapp", "start a new timer with  ${timer.displayTime()}")
+                    } else {
+                        Log.i("timerapp", "resume timer from  ${timer.displayTime()}")
+                    }
+
                 }
-                textView_countdown.setTextColor(resources.getColor(R.color.colorWork))
             }
         }
+
+
 
         if (timer.toSeconds() < 0) {
             makeToast("Invalid time")
             return
         }
 
-
-
         timer.needResume = false
         timer.isCounting = true
+        setTimerTextColor()
+        //textView_countdown.text = timer.displayTime()
         startCountDownIntent.putExtra("toCount", timer.toSeconds())
         startService(startCountDownIntent)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putLong("timeLeftInSecond", timer.toSeconds())
+        outState.putInt("workState", timer.workState.ordinal)
+        outState.putBoolean("isCounting", timer.isCounting)
+        outState.putBoolean("needResume", timer.needResume)
+        outState.putInt("workTimer", timer.workTimer)
+        outState.putInt("breakTimer", timer.breakTimer)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+
+        Log.i("Restore Instance", "timeLeftInSeconds = ${timer.toSeconds()}")
+        timer.restoreFromSeconds(savedInstanceState.getLong("timeLeftInSecond"))
+        timer.workState = WorkState.getValueFromInt(savedInstanceState.getInt("workState"))
+        timer.needResume = savedInstanceState.getBoolean("needResume")
+        timer.isCounting = savedInstanceState.getBoolean("isCounting")
+        timer.workTimer = savedInstanceState.getInt("workTimer")
+        timer.breakTimer = savedInstanceState.getInt("breakTimer")
+
+
+        //restart timer if the timer is running else, just display time left
+        if (timer.isCounting) {
+            startTimer()
+        } else {
+            setTimerTextColor()
+            textView_countdown.text = timer.displayTime()
+        }
+
+    }
 
 }
