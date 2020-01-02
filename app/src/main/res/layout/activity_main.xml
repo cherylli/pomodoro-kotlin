@@ -120,5 +120,16 @@
         app:layout_constraintVertical_bias="0.618"
         tools:text="05:00" />
 
+    <TextView
+        android:id="@+id/textView_completed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:text=""
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.153"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editText_break" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

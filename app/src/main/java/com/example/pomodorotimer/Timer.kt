@@ -2,11 +2,15 @@ package com.example.pomodorotimer
 
 
 class Timer{
+
     private var hourToCount: Int = 0
     private var minToCount: Int = 0
     private var secondToCount: Int = 0
+
     var isCounting = false
-    var needResume = false  // turn to true when you clicked pause
+    var isPause = false
+    // we don't need a third variable storing isStop because isStop will be true when timer is not counting and timer is not pause
+
     var workState = WorkState.Work //default to start with work timer
 
     // these two are both in minutes
@@ -26,7 +30,6 @@ class Timer{
         hourToCount = 0
         minToCount = workTimer
         secondToCount = 0
-
     }
 
 
@@ -61,8 +64,10 @@ class Timer{
 
     fun minusOneSecond() {
 
-        if (hourToCount == 0 && minToCount == 0 && secondToCount == 0) {
-            endTimer()
+        if (hourToCount == 0 && minToCount == 0 && secondToCount <= 1) {
+            secondToCount = 0
+            isCounting = false
+            return
         }
 
         if (secondToCount == 0 && minToCount > 0) {
@@ -78,14 +83,10 @@ class Timer{
 
     }
 
-    fun endTimer() {
-        isCounting = false
-        needResume = false
-    }
 
     fun resetTimer(){
         isCounting = false
-        needResume = false
+        isPause = false
         //reset timer, set timer back to work stat
         workState = WorkState.Work
         secondToCount=0
