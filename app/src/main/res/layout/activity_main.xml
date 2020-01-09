@@ -70,6 +70,7 @@
         android:hint="Minutes"
         android:inputType="number"
         android:maxLength="3"
+        android:selectAllOnFocus="true"
         app:layout_constraintBottom_toTopOf="@+id/editText_break"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/toolbar"
@@ -93,6 +94,7 @@
         android:hint="Minutes"
         android:inputType="number"
         android:maxLength="3"
+        android:selectAllOnFocus="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
