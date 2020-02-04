@@ -4,14 +4,12 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.Gravity
 import android.view.Menu
@@ -30,8 +28,10 @@ class MainActivity : AppCompatActivity() {
     private var timer = Timer()
     private val channelId = "pomodoroTimer"
     lateinit var wakeLock: PowerManager.WakeLock
-
     private var completed = 0
+
+
+
 
 
     private fun createNotificationChannel() {
@@ -90,6 +90,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
@@ -110,10 +113,20 @@ class MainActivity : AppCompatActivity() {
             "pomodoroTimer::wakeLock"
         )
 
+        //populate timer text with shared preference data
+        val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+        val savedWorkTimer = sharedPref.getInt("WORK",0)
+        val savedBreakTimer = sharedPref.getInt("BREAK",0)
+
+        editText_pomodoro.setText(savedWorkTimer.toString())
+        editText_break.setText(savedBreakTimer.toString())
+
+        Log.i("sharedPref","work $savedWorkTimer")
+        Log.i("sharedPref","break $savedBreakTimer")
 
         // default value
-        timer.workTimer = 1
-        timer.breakTimer = 1
+        timer.workTimer = savedWorkTimer
+        timer.breakTimer = savedBreakTimer
         timer.loadWorkTimer()
         textView_countdown.text = timer.displayTime()
         setTimerTextColor()
@@ -175,6 +188,20 @@ class MainActivity : AppCompatActivity() {
 
             val workTime = editText_pomodoro.text.toString()
             val breakTime = editText_break.text.toString()
+
+            val sharedPref = getPreferences(Context.MODE_PRIVATE)
+            //save to shared preferences
+            val editor = sharedPref.edit()
+            editor.putInt("WORK",workTime.toInt())
+            editor.putInt("BREAK",breakTime.toInt())
+            editor.commit()
+
+
+
+            //Log.i("sharedPref","work ${sharedPref.getString("work_timer","3")}")
+            //Log.i("sharedPref","break ${sharedPref.getString("break_timer","2")}")
+
+
 
             timer.workTimer = if (workTime.equals("")) 2 else workTime.toInt()
             timer.breakTimer = if (breakTime.equals("")) 2 else breakTime.toInt()
